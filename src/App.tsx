@@ -65,7 +65,7 @@ const failureIcons: Record<FailureKey, typeof RadioTower> = {
 
 const navItems = [
   { label: 'Overview', icon: Grid2X2 },
-  { label: 'Incidents', icon: AlertTriangle, active: true },
+  { label: 'Incidents', icon: AlertTriangle },
   { label: 'Replays', icon: CircleDot },
   { label: 'Agents', icon: Network },
   { label: 'Evaluations', icon: ClipboardCheck },
@@ -81,6 +81,15 @@ const judgeDemoFailures: FailureKey[] = ['model', 'mcp', 'retrieval', 'handoff']
 function App() {
   const startsInJudgeMode = new URLSearchParams(window.location.search).get('demo') === 'judge'
   const [scenarioId, setScenarioId] = useState(startsInJudgeMode ? 'claims' : scenarios[0].id)
+  const [activeNav, setActiveNav] = useState('Incidents')
+  const [environment, setEnvironment] = useState<'Prod' | 'Staging'>('Prod')
+  const [playbackSpeed, setPlaybackSpeed] = useState(1)
+  const [showCriticalOnly, setShowCriticalOnly] = useState(false)
+  const [showLegend, setShowLegend] = useState(false)
+  const [showAllDependencies, setShowAllDependencies] = useState(false)
+  const [noteCount, setNoteCount] = useState(0)
+  const [showGateCriteria, setShowGateCriteria] = useState(false)
+  const [toast, setToast] = useState('Ready')
   const [failures, setFailures] = useState<Set<FailureKey>>(
     () => new Set(startsInJudgeMode ? judgeDemoFailures : ['model', 'mcp', 'retrieval']),
   )
@@ -99,6 +108,12 @@ function App() {
   const activeSession = sessions[0] ?? previewSession
   const improvement = hardenedSession.score - activeSession.score
   const activeFailures = new Set(activeSession.failures)
+  const eventSteps = activeSession.timeline
+    .slice(2)
+    .filter((step) => !showCriticalOnly || step.status === 'fail' || step.status === 'warn')
+  const dependencyRows = showAllDependencies
+    ? activeSession.dependencyHealth
+    : activeSession.dependencyHealth.slice(0, 4)
   const incidentCode =
     selectedScenario.id === 'incident'
       ? 'INC-2026-0524-1843'
@@ -119,6 +134,7 @@ function App() {
         next.add(key)
       }
       setCopyState('idle')
+      setToast(`${failureLabels[key]} ${next.has(key) ? 'enabled' : 'disabled'}`)
       return next
     })
   }
@@ -127,18 +143,21 @@ function App() {
     const session = createReplaySession(selectedScenario, nextFailures)
     setSessions((current) => [session, ...current].slice(0, 8))
     setCopyState('idle')
+    setToast(`Replay captured: ${session.score}/100`)
   }
 
   function runWorstCase() {
     const worstCase = new Set<FailureKey>(allFailureKeys)
     setFailures(worstCase)
     runReplay(worstCase)
+    setToast('Worst-case replay captured')
   }
 
   function resetHealthy() {
     const healthy = new Set<FailureKey>()
     setFailures(healthy)
     runReplay(healthy)
+    setToast('Healthy baseline captured')
   }
 
   function startJudgeDemo() {
@@ -149,11 +168,14 @@ function App() {
     const session = createReplaySession(scenario, demoFailures)
     setSessions((current) => [session, ...current].slice(0, 8))
     setCopyState('idle')
+    setActiveNav('Incidents')
+    setToast('Judge demo loaded')
   }
 
   async function copyReport() {
     const copied = await writeClipboard(activeSession.report)
     setCopyState(copied ? 'copied' : 'blocked')
+    setToast(copied ? 'Report copied to clipboard' : 'Clipboard blocked by browser')
   }
 
   function downloadReport() {
@@ -165,6 +187,19 @@ function App() {
     link.download = `${activeSession.id.toLowerCase()}-resilience-report.json`
     link.click()
     URL.revokeObjectURL(url)
+    setToast('JSON report exported')
+  }
+
+  function cyclePlaybackSpeed() {
+    const speeds = [0.5, 1, 1.5, 2]
+    const next = speeds[(speeds.indexOf(playbackSpeed) + 1) % speeds.length]
+    setPlaybackSpeed(next)
+    setToast(`Replay speed set to ${next}x`)
+  }
+
+  function addNote() {
+    setNoteCount((current) => current + 1)
+    setToast('Operator note attached to replay')
   }
 
   return (
@@ -178,9 +213,17 @@ function App() {
           <strong>Resilience Lab</strong>
         </div>
 
-        <button className="environment-select" type="button">
+        <button
+          className="environment-select"
+          type="button"
+          onClick={() => {
+            const next = environment === 'Prod' ? 'Staging' : 'Prod'
+            setEnvironment(next)
+            setToast(`Environment set to ${next}`)
+          }}
+        >
           <span />
-          Prod
+          {environment}
           <ChevronDown size={15} />
         </button>
 
@@ -188,7 +231,15 @@ function App() {
           {navItems.map((item) => {
             const Icon = item.icon
             return (
-              <button className={item.active ? 'active' : ''} type="button" key={item.label}>
+              <button
+                className={activeNav === item.label ? 'active' : ''}
+                type="button"
+                key={item.label}
+                onClick={() => {
+                  setActiveNav(item.label)
+                  setToast(`${item.label} selected`)
+                }}
+              >
                 <Icon size={18} />
                 {item.label}
               </button>
@@ -246,7 +297,7 @@ function App() {
             <button type="button" data-testid="run-replay" onClick={() => runReplay()} aria-label="Run replay">
               <Play size={18} />
             </button>
-            <button type="button">1.0x</button>
+              <button type="button" onClick={cyclePlaybackSpeed}>{playbackSpeed.toFixed(1)}x</button>
           </div>
           <div className="incident-line">
             {allFailureKeys.map((key, index) => {
@@ -308,9 +359,16 @@ function App() {
 
         <section className="dashboard-grid">
           <section className="panel event-log">
-            <PanelHeader title="Event log" action="Filters" />
+            <PanelHeader
+              title="Event log"
+              action={showCriticalOnly ? 'All events' : 'Filters'}
+              onAction={() => {
+                setShowCriticalOnly((current) => !current)
+                setToast(showCriticalOnly ? 'Showing all events' : 'Showing critical events')
+              }}
+            />
             <div className="event-list">
-              {activeSession.timeline.slice(2).map((step, index) => {
+              {eventSteps.map((step, index) => {
                 const Icon = statusIcon[step.status]
                 return (
                   <article className={index === 0 ? 'selected' : ''} key={`${step.at}-${step.label}`}>
@@ -325,14 +383,28 @@ function App() {
                 )
               })}
             </div>
-            <button className="note-button" type="button">
+            <button className="note-button" type="button" onClick={addNote}>
               <Copy size={15} />
-              Add Note
+              {noteCount ? `${noteCount} Note${noteCount > 1 ? 's' : ''}` : 'Add Note'}
             </button>
           </section>
 
           <section className="panel trace-panel">
-            <PanelHeader title="Trace replay" action="Legend" />
+            <PanelHeader
+              title="Trace replay"
+              action={showLegend ? 'Hide legend' : 'Legend'}
+              onAction={() => {
+                setShowLegend((current) => !current)
+                setToast(showLegend ? 'Legend hidden' : 'Legend shown')
+              }}
+            />
+            {showLegend ? (
+              <div className="legend-bar">
+                <span><i className="legend-red" /> Failure path</span>
+                <span><i className="legend-green" /> Recovery path</span>
+                <span><i className="legend-cursor" /> Replay cursor</span>
+              </div>
+            ) : null}
             <TraceReplay activeSession={activeSession} />
             <div className="detail-card">
               <div>
@@ -352,9 +424,16 @@ function App() {
           </section>
 
           <section className="panel dependency-panel">
-            <PanelHeader title="Dependency health" action="View all" />
+            <PanelHeader
+              title="Dependency health"
+              action={showAllDependencies ? 'Collapse' : 'View all'}
+              onAction={() => {
+                setShowAllDependencies((current) => !current)
+                setToast(showAllDependencies ? 'Dependency list collapsed' : 'All dependencies shown')
+              }}
+            />
             <div className="dependency-list">
-              {activeSession.dependencyHealth.map((dependency, index) => {
+              {dependencyRows.map((dependency, index) => {
                 const Icon = healthIcon(index)
                 return (
                   <article className={dependency.status} key={dependency.name}>
@@ -425,13 +504,19 @@ function App() {
                 <small>{improvement > 0 ? `+${improvement} point recovery` : 'Reliability SLOs met'}</small>
               </article>
             </div>
-            <button type="button" onClick={downloadReport}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowGateCriteria(true)
+                setToast('Gate criteria opened')
+              }}
+            >
               View Gate Criteria
             </button>
           </section>
 
           <section className="panel report-panel">
-            <PanelHeader title="Evidence report" action="JSON" />
+            <PanelHeader title="Evidence report" action="JSON" onAction={downloadReport} />
             <pre>{activeSession.report}</pre>
           </section>
 
@@ -447,16 +532,45 @@ function App() {
             </div>
           </section>
         </section>
+
+        {showGateCriteria ? (
+          <section className="panel gate-criteria-panel">
+            <PanelHeader
+              title="Gate criteria"
+              action="Close"
+              onAction={() => {
+                setShowGateCriteria(false)
+                setToast('Gate criteria closed')
+              }}
+            />
+            <div className="criteria-grid">
+              <article><strong>Minimum score</strong><span>68/100</span></article>
+              <article><strong>Unsupported claims</strong><span>0 allowed</span></article>
+              <article><strong>Fallback route</strong><span>Required</span></article>
+              <article><strong>Human handoff</strong><span>Context packet required</span></article>
+            </div>
+          </section>
+        ) : null}
+
+        <div className="toast" role="status">{toast}</div>
       </section>
     </main>
   )
 }
 
-function PanelHeader({ title, action }: { title: string; action?: string }) {
+function PanelHeader({
+  title,
+  action,
+  onAction,
+}: {
+  title: string
+  action?: string
+  onAction?: () => void
+}) {
   return (
     <header className="panel-header">
       <h2>{title}</h2>
-      {action ? <button type="button">{action}</button> : null}
+      {action ? <button type="button" onClick={onAction}>{action}</button> : null}
     </header>
   )
 }
