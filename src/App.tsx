@@ -2,25 +2,30 @@ import {
   Activity,
   AlertTriangle,
   ArrowDownToLine,
-  Bot,
+  Bell,
+  Boxes,
   CheckCircle2,
-  ChevronRight,
+  ChevronDown,
+  CircleDot,
   ClipboardCheck,
   Copy,
-  DatabaseZap,
+  Database,
   FileJson,
-  Gauge,
-  GitBranch,
-  History,
-  ListChecks,
+  Grid2X2,
+  Lock,
+  Mail,
+  Network,
   Play,
   RadioTower,
   RefreshCw,
   Route,
+  Settings,
+  Share2,
+  Shield,
   ShieldCheck,
   Siren,
-  TerminalSquare,
-  TestTube2,
+  UserRound,
+  Users,
   Wrench,
   Zap,
 } from 'lucide-react'
@@ -37,9 +42,9 @@ import {
 import './App.css'
 
 const statusLabel: Record<StepStatus, string> = {
-  pass: 'Pass',
-  warn: 'Watch',
-  fail: 'Failed',
+  pass: 'Healthy',
+  warn: 'Degraded',
+  fail: 'Down',
   recover: 'Recovered',
 }
 
@@ -52,11 +57,23 @@ const statusIcon: Record<StepStatus, typeof CheckCircle2> = {
 
 const failureIcons: Record<FailureKey, typeof RadioTower> = {
   model: RadioTower,
-  mcp: TerminalSquare,
-  retrieval: DatabaseZap,
+  mcp: Wrench,
+  retrieval: Database,
   schema: FileJson,
-  handoff: Siren,
+  handoff: Users,
 }
+
+const navItems = [
+  { label: 'Overview', icon: Grid2X2 },
+  { label: 'Incidents', icon: AlertTriangle, active: true },
+  { label: 'Replays', icon: CircleDot },
+  { label: 'Agents', icon: Network },
+  { label: 'Evaluations', icon: ClipboardCheck },
+  { label: 'Dependencies', icon: Boxes },
+  { label: 'Launch Gate', icon: Shield },
+  { label: 'Alerts', icon: Bell },
+  { label: 'Settings', icon: Settings },
+]
 
 const savedSessionsKey = 'resilience-lab.sessions.v1'
 const judgeDemoFailures: FailureKey[] = ['model', 'mcp', 'retrieval', 'handoff']
@@ -81,6 +98,13 @@ function App() {
   )
   const activeSession = sessions[0] ?? previewSession
   const improvement = hardenedSession.score - activeSession.score
+  const activeFailures = new Set(activeSession.failures)
+  const incidentCode =
+    selectedScenario.id === 'incident'
+      ? 'INC-2026-0524-1843'
+      : selectedScenario.id === 'procurement'
+        ? 'INC-2026-0524-2119'
+        : 'INC-2026-0524-1432'
 
   useEffect(() => {
     localStorage.setItem(savedSessionsKey, JSON.stringify(sessions.slice(0, 8)))
@@ -144,98 +168,125 @@ function App() {
   }
 
   return (
-    <main className="shell">
-      <section className="hero-band">
-        <nav className="topbar" aria-label="Product navigation">
-          <div className="brand">
-            <ShieldCheck size={22} />
-            <span>Resilience Lab</span>
+    <main className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">
+            <span />
+            <span />
           </div>
-          <div className="topbar-actions">
-            <button className="icon-button" type="button" aria-label="Run healthy replay" onClick={resetHealthy}>
-              <RefreshCw size={18} />
-            </button>
-            <button className="primary-button" type="button" data-testid="run-replay" onClick={() => runReplay()}>
-              <Play size={17} />
-              Run replay
-            </button>
-            <button className="danger-button" type="button" data-testid="worst-case" onClick={runWorstCase}>
-              <Zap size={17} />
-              Worst case
-            </button>
-          </div>
+          <strong>Resilience Lab</strong>
+        </div>
+
+        <button className="environment-select" type="button">
+          <span />
+          Prod
+          <ChevronDown size={15} />
+        </button>
+
+        <nav className="nav-list" aria-label="Console navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <button className={item.active ? 'active' : ''} type="button" key={item.label}>
+                <Icon size={18} />
+                {item.label}
+              </button>
+            )
+          })}
         </nav>
 
-        <div className="hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow">Agent reliability before production</p>
-            <h1>Replay the moment your AI agent breaks.</h1>
-            <p className="hero-text">
-              Resilience Lab records model, MCP, retrieval, schema, and handoff failures, then turns them into a
-              recovery timeline, launch score, and exportable regression artifact.
+        <div className="security-card">
+          <ShieldCheck size={22} />
+          <strong>Enterprise Ready</strong>
+          <span>SOC 2 • GDPR • HIPAA</span>
+          <span>End-to-end replay evidence</span>
+        </div>
+
+        <div className="profile-card">
+          <span>AV</span>
+          <div>
+            <strong>Alex V.</strong>
+            <small>Platform Admin</small>
+          </div>
+          <ChevronDown size={15} />
+        </div>
+      </aside>
+
+      <section className="console">
+        <header className="incident-header">
+          <div>
+            <p className="crumbs">Incidents <span>/</span> {incidentCode}</p>
+            <div className="title-row">
+              <h1>{selectedScenario.title} failure</h1>
+              <span className="env-pill">Production</span>
+            </div>
+            <p className="meta-line">
+              May 24, 2026 <span>•</span> 14:32:11 UTC <span>•</span> 2m 47s <span>•</span>{' '}
+              {activeSession.id.toLowerCase()}
             </p>
-            <div className="hero-actions">
-              <button className="primary-button dark" type="button" onClick={() => runReplay()}>
-                <Play size={17} />
-                Capture session
-              </button>
-              <button className="secondary-button" type="button" onClick={downloadReport}>
-                <ArrowDownToLine size={17} />
-                Export JSON
-              </button>
-              <button className="secondary-button" type="button" data-testid="judge-demo" onClick={startJudgeDemo}>
-                <ListChecks size={17} />
-                Judge demo
-              </button>
+          </div>
+          <div className="header-actions">
+            <button type="button" onClick={copyReport}>
+              <Share2 size={16} />
+              {copyState === 'copied' ? 'Copied' : copyState === 'blocked' ? 'Copy blocked' : 'Share'}
+            </button>
+            <button type="button" onClick={downloadReport} data-testid="download-report">
+              <ArrowDownToLine size={16} />
+              Export
+            </button>
+            <button className="create-report" type="button" data-testid="judge-demo" onClick={startJudgeDemo}>
+              Create Report
+            </button>
+          </div>
+        </header>
+
+        <section className="timeline-strip panel">
+          <div className="play-stack">
+            <button type="button" data-testid="run-replay" onClick={() => runReplay()} aria-label="Run replay">
+              <Play size={18} />
+            </button>
+            <button type="button">1.0x</button>
+          </div>
+          <div className="incident-line">
+            {allFailureKeys.map((key, index) => {
+              const Icon = failureIcons[key]
+              const active = activeFailures.has(key)
+              return (
+                <button
+                  className={active ? 'active' : ''}
+                  type="button"
+                  data-testid={`failure-${key}`}
+                  key={key}
+                  onClick={() => toggleFailure(key)}
+                >
+                  <span>{timeForIndex(index)}</span>
+                  <small>{failureLabels[key]}</small>
+                  <i>
+                    <Icon size={20} />
+                  </i>
+                </button>
+              )
+            })}
+            <div className="recovered-dot">
+              <CheckCircle2 size={18} />
             </div>
           </div>
+          <div className="recovery-summary">
+            <CheckCircle2 size={22} />
+            <strong>{activeSession.ciGate.status === 'pass' ? 'Ready' : 'Recovered'}</strong>
+            <span>14:35:02</span>
+            <small>Total duration 2m 47s</small>
+          </div>
+        </section>
 
-          <section className="runtime-panel" aria-label="Current replay report">
-            <div className="runtime-header">
-              <span>{activeSession.id}</span>
-              <strong>{activeSession.readiness}</strong>
-            </div>
-            <div className="score-wheel" aria-label={`Resilience score ${activeSession.score} out of 100`}>
-              <strong>{activeSession.score}</strong>
-              <span>resilience score</span>
-            </div>
-            <div className="trace-lines">
-              {activeSession.timeline.slice(-4).map((step) => {
-                const Icon = statusIcon[step.status]
-                return (
-                  <article className={`trace-row ${step.status}`} key={`${step.at}-${step.label}`}>
-                    <Icon size={17} />
-                    <span>{step.at}</span>
-                    <p>{step.label}</p>
-                    <strong>{statusLabel[step.status]}</strong>
-                  </article>
-                )
-              })}
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section className="metrics-band" aria-label="Resilience metrics">
-        <Metric testId="score-metric" icon={Gauge} label="Score" value={`${activeSession.score}/100`} />
-        <Metric testId="failures-metric" icon={Zap} label="Failures injected" value={String(activeSession.failures.length)} />
-        <Metric testId="blocked-metric" icon={Bot} label="Unsafe paths blocked" value={String(activeSession.unsafePathsBlocked)} />
-        <Metric testId="loss-metric" icon={ClipboardCheck} label="Loss avoided" value={activeSession.estimatedLossAvoided} />
-      </section>
-
-      <section className="workbench">
-        <div className="section-heading">
-          <p className="eyebrow">Chaos workbench</p>
-          <h2>Pick a serious agent. Break its dependencies. Prove the recovery.</h2>
-        </div>
-
-        <div className="scenario-grid">
+        <section className="scenario-row">
           {scenarios.map((scenario) => (
             <button
-              className={`scenario-card ${scenario.id === scenarioId ? 'selected' : ''}`}
-              key={scenario.id}
+              className={scenario.id === scenarioId ? 'active' : ''}
               type="button"
               data-testid={`scenario-${scenario.id}`}
+              key={scenario.id}
               onClick={() => {
                 setScenarioId(scenario.id)
                 setCopyState('idle')
@@ -243,295 +294,280 @@ function App() {
             >
               <span>{scenario.market}</span>
               <strong>{scenario.title}</strong>
-              <p>{scenario.risk}</p>
             </button>
           ))}
-        </div>
+          <button className="chaos-button" type="button" data-testid="worst-case" onClick={runWorstCase}>
+            <Zap size={16} />
+            Worst case
+          </button>
+          <button className="healthy-button" type="button" onClick={resetHealthy}>
+            <RefreshCw size={16} />
+            Healthy replay
+          </button>
+        </section>
 
-        <div className="lab-grid">
-          <section className="control-surface" aria-label="Failure injection controls">
-            <div className="panel-heading">
-              <Route size={20} />
-              <div>
-                <h3>Failure injector</h3>
-                <p>These toggles become replayable regression inputs.</p>
-              </div>
-            </div>
-            <div className="failure-list">
-              {allFailureKeys.map((key) => {
-                const Icon = failureIcons[key]
-                const active = failures.has(key)
-                return (
-                  <button
-                    className={`failure-toggle ${active ? 'active' : ''}`}
-                    type="button"
-                    key={key}
-                    data-testid={`failure-${key}`}
-                    onClick={() => toggleFailure(key)}
-                  >
-                    <Icon size={19} />
-                    <span>
-                      <strong>{failureLabels[key]}</strong>
-                      <small>{failureDescription(key)}</small>
-                    </span>
-                    <i>{active ? 'On' : 'Off'}</i>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-
-          <section className="timeline-panel" aria-label="Replay timeline">
-            <div className="panel-heading">
-              <GitBranch size={20} />
-              <div>
-                <h3>Agent flight recorder</h3>
-                <p>Timestamped evidence of what failed, what was blocked, and how the agent recovered.</p>
-              </div>
-            </div>
-            <div className="timeline">
-              {activeSession.timeline.map((step) => {
+        <section className="dashboard-grid">
+          <section className="panel event-log">
+            <PanelHeader title="Event log" action="Filters" />
+            <div className="event-list">
+              {activeSession.timeline.slice(2).map((step, index) => {
                 const Icon = statusIcon[step.status]
                 return (
-                  <article className={`timeline-step ${step.status}`} key={`${step.at}-${step.label}`}>
-                    <span>{step.at}</span>
+                  <article className={index === 0 ? 'selected' : ''} key={`${step.at}-${step.label}`}>
+                    <span>{step.at.replace('00:', '14:3')}</span>
                     <Icon size={18} />
                     <div>
                       <strong>{step.label}</strong>
-                      <p>{step.detail}</p>
+                      <small>{dependencyAlias(step.label)}</small>
                     </div>
-                    <em>{statusLabel[step.status]}</em>
+                    <em>{index === activeSession.timeline.length - 3 ? '-' : `${(7.8 + index * 3.7).toFixed(1)}s`}</em>
+                  </article>
+                )
+              })}
+            </div>
+            <button className="note-button" type="button">
+              <Copy size={15} />
+              Add Note
+            </button>
+          </section>
+
+          <section className="panel trace-panel">
+            <PanelHeader title="Trace replay" action="Legend" />
+            <TraceReplay activeSession={activeSession} />
+            <div className="detail-card">
+              <div>
+                <strong>{activeSession.timeline[2]?.label ?? 'Replay event'}</strong>
+                <span>{activeSession.timeline[2]?.at ?? '00:01.118'}</span>
+                <em>Error</em>
+              </div>
+              <dl>
+                <dt>Agent</dt>
+                <dd>{selectedScenario.operator.toLowerCase().replaceAll(' ', '-')}</dd>
+                <dt>Impact</dt>
+                <dd>{activeSession.estimatedLossAvoided}</dd>
+                <dt>Recovery</dt>
+                <dd>{selectedScenario.recoveryPlan}</dd>
+              </dl>
+            </div>
+          </section>
+
+          <section className="panel dependency-panel">
+            <PanelHeader title="Dependency health" action="View all" />
+            <div className="dependency-list">
+              {activeSession.dependencyHealth.map((dependency, index) => {
+                const Icon = healthIcon(index)
+                return (
+                  <article className={dependency.status} key={dependency.name}>
+                    <Icon size={17} />
+                    <strong>{dependency.name}</strong>
+                    <Sparkline status={dependency.status} />
+                    <span>{statusLabel[dependency.status]}</span>
                   </article>
                 )
               })}
             </div>
           </section>
-        </div>
-      </section>
 
-      <section className="evidence-band">
-        <section className="report-panel" aria-label="Generated report">
-          <div className="panel-heading">
-            <ClipboardCheck size={20} />
-            <div>
-              <h3>Evidence report</h3>
-              <p>Copy this into a launch review, incident ticket, or Devpost demo narration.</p>
-            </div>
-          </div>
-          <pre>{activeSession.report}</pre>
-          <div className="button-row">
-              <button className="primary-button dark" type="button" data-testid="copy-report" onClick={copyReport}>
-                <Copy size={17} />
-              {copyState === 'copied' ? 'Copied' : copyState === 'blocked' ? 'Copy blocked' : 'Copy report'}
-              </button>
-            <button className="secondary-button" type="button" data-testid="download-report" onClick={downloadReport}>
-              <ArrowDownToLine size={17} />
-              Download JSON
-            </button>
-          </div>
-        </section>
+          <section className="panel context-panel">
+            <PanelHeader title="Incident context" />
+            <dl>
+              <dt>Agent</dt>
+              <dd>{selectedScenario.title}</dd>
+              <dt>Version</dt>
+              <dd>1.8.3</dd>
+              <dt>Environment</dt>
+              <dd>Production</dd>
+              <dt>User</dt>
+              <dd>user_9d7f2c</dd>
+              <dt>Channel</dt>
+              <dd>Web</dd>
+              <dt>Session ID</dt>
+              <dd>{activeSession.id.toLowerCase()}</dd>
+              <dt>Tags</dt>
+              <dd>{selectedScenario.market.toLowerCase()}, resilient-agent</dd>
+            </dl>
+          </section>
 
-        <section className="checks-panel" aria-label="Regression checks">
-          <div className="panel-heading">
-            <TestTube2 size={20} />
-            <div>
-              <h3>Regression checks</h3>
-              <p>The replay becomes a product-quality gate.</p>
-            </div>
-          </div>
-          <div className="check-list">
-            {activeSession.checks.map((check) => {
-              const Icon = statusIcon[check.result]
-              return (
-                <article className={`check-item ${check.result}`} key={check.name}>
-                  <Icon size={18} />
+          <section className="panel performance-panel">
+            <PanelHeader title="Performance over time" />
+            <PerformanceChart />
+          </section>
+
+          <section className="panel recovery-panel">
+            <PanelHeader title="Recovery paths" />
+            <div className="recovery-list">
+              {activeSession.remediationTasks.slice(0, 3).map((task, index) => (
+                <article key={task.title}>
+                  <span>{index + 1}</span>
                   <div>
-                    <strong>{check.name}</strong>
-                    <p>{check.expected}</p>
+                    <strong>{task.title}</strong>
+                    <small>{task.priority === 'P0' ? 'Triggered' : 'Success'} +{(7.8 + index * 6.1).toFixed(1)}s</small>
                   </div>
-                  <span>{statusLabel[check.result]}</span>
                 </article>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className={`ci-panel ${activeSession.ciGate.status}`} aria-label="CI launch gate">
-          <div className="panel-heading">
-            <TerminalSquare size={20} />
-            <div>
-              <h3>CI launch gate</h3>
-              <p>{activeSession.ciGate.summary}</p>
+              ))}
             </div>
-          </div>
-          <code>{activeSession.ciGate.command}</code>
-          <strong>{activeSession.ciGate.status === 'pass' ? 'Release allowed' : 'Release blocked'}</strong>
-        </section>
+          </section>
 
-        <section className="history-panel" aria-label="Saved replay history">
-          <div className="panel-heading">
-            <History size={20} />
-            <div>
-              <h3>Session history</h3>
-              <p>Recent runs are saved locally for the demo.</p>
-            </div>
-          </div>
-          <div className="history-list">
-            {sessions.length === 0 ? (
-              <p className="empty-state">Run a replay to capture the first session.</p>
-            ) : (
-              sessions.map((session, index) => (
-                <button
-                  className="history-item"
-                  key={`${session.id}-${index}`}
-                  type="button"
-                  data-testid="history-item"
-                  onClick={() => restoreSession(session)}
-                >
-                  <strong>{session.scenarioTitle}</strong>
-                  <span>{session.id}</span>
-                  <em>{session.score}/100</em>
-                </button>
-              ))
-            )}
-          </div>
-        </section>
-      </section>
-
-      <section className="operations-band">
-        <section className="health-panel" aria-label="Dependency health matrix">
-          <div className="panel-heading">
-            <Activity size={20} />
-            <div>
-              <h3>Dependency health matrix</h3>
-              <p>Replay traces by model, tool, retrieval, schema, and handoff layer.</p>
-            </div>
-          </div>
-          <div className="health-grid">
-            {activeSession.dependencyHealth.map((dependency) => {
-              const Icon = statusIcon[dependency.status]
-              return (
-                <article className={`health-item ${dependency.status}`} key={dependency.name}>
-                  <Icon size={18} />
-                  <strong>{dependency.name}</strong>
-                  <span>{dependency.latencyMs} ms</span>
-                  <p>{dependency.detail}</p>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="compare-panel" aria-label="Replay comparison">
-          <div className="panel-heading">
-            <GitBranch size={20} />
-            <div>
-              <h3>Before and after hardening</h3>
-              <p>Judges can see exactly what gets better when teams fix the replay.</p>
-            </div>
-          </div>
-          <div className="comparison">
-            <article>
-              <span>Current replay</span>
-              <strong>{activeSession.score}/100</strong>
-              <p>{activeSession.readiness}</p>
-            </article>
-            <ChevronRight size={28} />
-            <article>
-              <span>Hardened baseline</span>
-              <strong>{hardenedSession.score}/100</strong>
-              <p>{improvement > 0 ? `+${improvement} point recovery` : 'No gap detected'}</p>
-            </article>
-          </div>
-        </section>
-
-        <section className="remediation-panel" aria-label="Remediation backlog">
-          <div className="panel-heading">
-            <Wrench size={20} />
-            <div>
-              <h3>Auto-remediation backlog</h3>
-              <p>Every failed replay becomes scoped engineering work.</p>
-            </div>
-          </div>
-          <div className="task-list">
-            {activeSession.remediationTasks.map((task) => (
-              <article className={`task-item ${task.priority.toLowerCase()}`} key={task.title}>
-                <span>{task.priority}</span>
-                <div>
-                  <strong>{task.title}</strong>
-                  <p>{task.detail}</p>
-                  <em>{task.owner}</em>
-                </div>
+          <section className={`panel launch-panel ${activeSession.ciGate.status}`}>
+            <PanelHeader title="Launch gate" />
+            <div className="gate-grid">
+              <article className="blocked">
+                <Lock size={22} />
+                <strong>{activeSession.ciGate.status === 'pass' ? 'MONITORED' : 'BLOCKED'}</strong>
+                <span>{activeSession.remediationTasks.length} open issues</span>
+                <small>{activeSession.unsafePathsBlocked} unsafe paths blocked</small>
               </article>
-            ))}
-          </div>
+              <Route size={26} />
+              <article className="safe">
+                <ShieldCheck size={25} />
+                <strong>SAFE TO LAUNCH</strong>
+                <span>{hardenedSession.score}/100 baseline</span>
+                <small>{improvement > 0 ? `+${improvement} point recovery` : 'Reliability SLOs met'}</small>
+              </article>
+            </div>
+            <button type="button" onClick={downloadReport}>
+              View Gate Criteria
+            </button>
+          </section>
+
+          <section className="panel report-panel">
+            <PanelHeader title="Evidence report" action="JSON" />
+            <pre>{activeSession.report}</pre>
+          </section>
+
+          <section className="panel readiness-panel">
+            <PanelHeader title="Submission readiness" />
+            <div className="readiness-steps">
+              {['Show the break', 'Prove safe behavior', 'Export the artifact', 'Switch scenarios'].map((step) => (
+                <article key={step}>
+                  <CheckCircle2 size={17} />
+                  <span>{step}</span>
+                </article>
+              ))}
+            </div>
+          </section>
         </section>
-      </section>
-
-      <section className="submission-band">
-        <div className="section-heading">
-          <p className="eyebrow">Submission readiness</p>
-          <h2>Built for a two-minute judging window.</h2>
-        </div>
-        <div className="readiness-grid">
-          <article>
-            <strong>1</strong>
-            <h3>Show the break</h3>
-            <p>Click Judge demo or Worst case to trigger dependency failures immediately.</p>
-          </article>
-          <article>
-            <strong>2</strong>
-            <h3>Prove safe behavior</h3>
-            <p>Point to the blocked unsafe answer, safe response, regression checks, and launch gate.</p>
-          </article>
-          <article>
-            <strong>3</strong>
-            <h3>Export the artifact</h3>
-            <p>Download JSON or copy the report as the evidence package for release review.</p>
-          </article>
-          <article>
-            <strong>4</strong>
-            <h3>Make it reusable</h3>
-            <p>Switch scenarios to show this works for claims, incidents, and vendor risk agents.</p>
-          </article>
-        </div>
-      </section>
-
-      <section className="architecture-band">
-        <div className="section-heading">
-          <p className="eyebrow">Startup version</p>
-          <h2>A proxy, a recorder, and a replay engine for AI agents.</h2>
-        </div>
-        <div className="architecture-grid">
-          <article>
-            <Activity size={22} />
-            <h3>Observe</h3>
-            <p>Proxy model and MCP calls so prompts, tool payloads, timeouts, and schema drift are captured.</p>
-          </article>
-          <article>
-            <AlertTriangle size={22} />
-            <h3>Break</h3>
-            <p>Inject brownouts, stale retrieval, malformed JSON, rate limits, and partial tool outages.</p>
-          </article>
-          <article>
-            <CheckCircle2 size={22} />
-            <h3>Prove</h3>
-            <p>Replay the same session until the agent recovers safely, then export a score and test artifact.</p>
-          </article>
-        </div>
       </section>
     </main>
   )
+}
 
-  function restoreSession(session: ReplaySession) {
-    const scenario = scenarios.find((item) => item.id === session.scenarioId)
-    if (scenario) {
-      setScenarioId(scenario.id)
-    }
-    setFailures(new Set(session.failures))
-    setSessions((current) => [session, ...current.filter((item) => item.id !== session.id)])
-    setCopyState('idle')
-  }
+function PanelHeader({ title, action }: { title: string; action?: string }) {
+  return (
+    <header className="panel-header">
+      <h2>{title}</h2>
+      {action ? <button type="button">{action}</button> : null}
+    </header>
+  )
+}
+
+function TraceReplay({ activeSession }: { activeSession: ReplaySession }) {
+  return (
+    <div className="trace-replay">
+      <div className="trace-label user">
+        <UserRound size={17} />
+        <span>User Request</span>
+      </div>
+      <div className="trace-label recovery">
+        <CheckCircle2 size={20} />
+        <span>Recovery<br />Fallback + human</span>
+      </div>
+      <svg viewBox="0 0 720 280" role="img" aria-label="Agent trace replay">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <path className="bad-path" d="M80 140 C160 20 160 40 230 42 L560 42 C590 42 590 140 640 140" />
+        <path className="good-path" d="M80 140 C170 100 190 95 260 96 L560 96 C590 96 600 140 640 140" />
+        <path className="good-path" d="M80 140 C170 150 190 160 260 160 L560 160 C590 160 600 140 640 140" />
+        <path className="good-path" d="M80 140 C170 215 190 220 260 220 L560 220 C590 220 600 140 640 140" />
+        {[80, 190, 300, 410, 520, 640].map((x) => (
+          <circle className="node good" cx={x} cy={140} r="7" key={`mid-${x}`} />
+        ))}
+        {[190, 300, 410, 520].map((x) => (
+          <circle className="node good" cx={x} cy={96} r="7" key={`top-${x}`} />
+        ))}
+        {[190, 300, 410, 520].map((x) => (
+          <circle className="node good" cx={x} cy={160} r="7" key={`low-${x}`} />
+        ))}
+        {[190, 300, 410, 520].map((x) => (
+          <circle className="node good" cx={x} cy={220} r="7" key={`base-${x}`} />
+        ))}
+        {activeSession.failures.slice(0, 5).map((failure, index) => {
+          const Icon = failureIcons[failure]
+          const x = 170 + index * 92
+          return (
+            <foreignObject x={x} y="25" width="44" height="44" key={failure}>
+              <div className="svg-icon">
+                <Icon size={20} />
+              </div>
+            </foreignObject>
+          )
+        })}
+        <line className="cursor-line" x1="360" x2="360" y1="0" y2="270" />
+        <circle className="recovery-node" cx="640" cy="140" r="17" filter="url(#glow)" />
+      </svg>
+    </div>
+  )
+}
+
+function Sparkline({ status }: { status: StepStatus }) {
+  const stroke = status === 'pass' || status === 'recover' ? '#98d36d' : status === 'warn' ? '#ff9f2e' : '#ff554d'
+  return (
+    <svg className="sparkline" viewBox="0 0 120 24" aria-hidden="true">
+      <polyline
+        points="0,14 8,13 16,16 24,10 32,13 40,9 48,17 56,12 64,15 72,8 80,16 88,11 96,13 104,10 112,14 120,12"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="2"
+      />
+    </svg>
+  )
+}
+
+function PerformanceChart() {
+  return (
+    <svg className="performance-chart" viewBox="0 0 620 210" role="img" aria-label="Performance over time">
+      {[0, 1, 2, 3].map((line) => (
+        <line x1="0" x2="620" y1={30 + line * 45} y2={30 + line * 45} key={line} />
+      ))}
+      <polyline
+        className="success"
+        points="0,58 40,54 80,63 120,70 160,82 200,84 240,88 280,92 320,64 360,58 400,62 440,57 480,61 520,60 560,56 620,59"
+      />
+      <polyline
+        className="latency"
+        points="0,138 45,130 90,142 135,128 180,136 225,125 270,139 315,132 360,138 405,126 450,136 495,131 540,140 585,127 620,135"
+      />
+      <polyline
+        className="errors"
+        points="0,178 60,175 120,180 180,172 240,176 285,168 315,74 345,168 390,176 450,174 510,179 570,176 620,178"
+      />
+    </svg>
+  )
+}
+
+function healthIcon(index: number) {
+  return [RadioTower, Database, Database, Wrench, Users, Mail][index] ?? Activity
+}
+
+function dependencyAlias(label: string) {
+  if (label.toLowerCase().includes('model')) return 'gpt-4o'
+  if (label.toLowerCase().includes('mcp')) return 'payments_refund'
+  if (label.toLowerCase().includes('retriever') || label.toLowerCase().includes('evidence')) return 'kb://policy-refunds'
+  if (label.toLowerCase().includes('schema')) return 'response_validation'
+  if (label.toLowerCase().includes('handoff')) return 'human_support'
+  if (label.toLowerCase().includes('unsafe')) return 'guardrail'
+  return 'fallback + human'
+}
+
+function timeForIndex(index: number) {
+  return ['14:32:18', '14:32:47', '14:33:21', '14:33:59', '14:34:32'][index] ?? '14:35:02'
 }
 
 function loadInitialSessions(startsInJudgeMode: boolean) {
@@ -542,37 +578,6 @@ function loadInitialSessions(startsInJudgeMode: boolean) {
 
   const scenario = scenarios.find((item) => item.id === 'claims') ?? scenarios[0]
   return [createReplaySession(scenario, new Set(judgeDemoFailures)), ...loaded].slice(0, 8)
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  testId,
-}: {
-  icon: typeof Gauge
-  label: string
-  value: string
-  testId: string
-}) {
-  return (
-    <article data-testid={testId}>
-      <Icon size={20} />
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
-  )
-}
-
-function failureDescription(key: FailureKey) {
-  const descriptions: Record<FailureKey, string> = {
-    model: 'Primary model times out, returns partial output, or drops below latency SLO.',
-    mcp: 'A required MCP tool returns 500s, 503s, or retry exhaustion.',
-    retrieval: 'Knowledge search returns stale, conflicting, or low-confidence evidence.',
-    schema: 'Tool output is malformed and cannot be trusted by the next agent step.',
-    handoff: 'Ticket, incident channel, or human escalation write is unavailable.',
-  }
-  return descriptions[key]
 }
 
 function loadSessions() {
