@@ -1,78 +1,68 @@
-# Resilience Lab
+# Devpost Submission Copy
+
+## Project Name
+
+Resilience Lab
 
 ## Tagline
 
 Replay the moment your AI agent breaks.
 
-## One-line pitch
+## Short Description
 
-Resilience Lab is an agent flight recorder that captures model, MCP, retrieval, schema, and escalation failures, replays them, and proves whether the agent recovers safely before users ever see the break.
+Resilience Lab is an agent flight recorder and chaos replay console. It injects model, MCP, retrieval, schema, and handoff failures, replays how the agent recovered, blocks unsafe paths, scores launch readiness, and exports evidence for launch reviews or regression tests.
 
-## What it does
+## Inspiration
 
-Resilience Lab gives AI teams a chaos workbench for production agents:
+AI agents are easy to demo and hard to trust in production. The scary failures are rarely dramatic; they are partial outages, stale context, malformed tool output, silent escalation failures, and model brownouts. Resilience Lab was built around one question: before an agent reaches users, can we prove how it behaves when the stack breaks?
 
-- Pick a high-stakes agent scenario.
-- Inject LLM brownouts, MCP server 500s, stale retrieval, malformed tool output, and escalation failures.
-- Watch a timestamped recovery timeline.
-- See the resilience score, unsafe-output prevention, active failure count, and estimated loss avoided.
-- Run regression checks for launch readiness.
-- Block or pass a CI launch gate with a generated replay command.
-- Inspect a dependency health matrix.
-- Compare the current replay against a hardened baseline.
-- Generate an auto-remediation backlog with owners and priorities.
-- Save recent replay sessions locally.
-- Export a judge-ready JSON evidence report that explains what failed and how the agent protected the user.
-- Use the one-click Judge demo path for a fast, repeatable walkthrough.
+## What It Does
 
-The current demo focuses on three serious agent categories: insurance claims, DevOps incident response, and vendor-risk review.
+Resilience Lab lets a team pick a high-risk agent scenario, inject realistic dependency failures, and watch the recovery path. The console shows the active failure set, resilience score, dependency health, unsafe paths blocked, launch-gate status, remediation work, and an exportable report.
 
-## Why it matters
+The judge demo opens directly into a claims-agent incident where the model, MCP tool, retrieval layer, and handoff path are degraded. The product shows that the agent should not guess, hide the outage, or continue with unsafe output. Instead, it blocks risky responses and creates an evidence trail.
 
-Most AI agent demos only prove the happy path. Real deployments fail in quieter ways: a tool times out, a model returns malformed JSON, a retriever produces stale evidence, or an escalation system refuses writes. Those moments are where users lose trust.
+## How We Built It
 
-Resilience Lab turns those failure modes into replayable tests. The product is built around a simple belief: an agent is not production-ready until its failure behavior is visible, repeatable, and safe.
+The prototype is a Vite, React, and TypeScript app with a deterministic replay engine in `src/engine.ts`. The engine creates scenario-specific failures, timelines, scores, dependency health states, regression checks, remediation tasks, and JSON reports. The UI is built as a production-style resilience dashboard with local session history and a one-click judge path.
 
-## Sponsor fit
+## Sponsor Fit
 
-Primary target: TrueFoundry: Resilient Agents.
+Primary sponsor target: **TrueFoundry: Resilient Agents**.
 
-The challenge asks how agents behave when MCP servers error, LLM providers go down, and infrastructure chaos reaches the user experience. Resilience Lab is built directly for that question. It shows the failure, the route change, the guarded response, the handoff behavior, and the proof artifact.
+The challenge asks how agents should behave when MCP servers fail, LLM providers go down, or infrastructure chaos reaches users. Resilience Lab is built directly for that problem. It makes failure behavior visible, repeatable, and enforceable before launch.
 
-## Technical direction
+## What Makes It Different
 
-The prototype is a Vite, React, and TypeScript web app with a deterministic replay engine in `src/engine.ts`. It generates scenario-specific timelines, launch scores, safe responses, regression checks, dependency health, CI gate outcomes, remediation tasks, and downloadable JSON reports.
+This is not another chatbot or support assistant. Resilience Lab is reliability infrastructure for the agent stack itself. It focuses on the moment a production agent is least trustworthy: when dependencies fail and the system must decide whether to recover, refuse, escalate, or block release.
 
-The next implementation layer would add:
+## Challenges
 
-- A proxy around model gateway calls.
-- MCP request and response capture.
-- Failure injection profiles for latency, 500s, malformed payloads, stale retrieval, and rate limits.
-- Replay sessions that become regression tests.
-- Exportable resilience reports for engineering, compliance, and customer-facing operations.
+The hardest product decision was keeping the prototype focused. A generic monitoring dashboard would be easy to build but weak for judging. The stronger direction was to make the demo prove one thing extremely clearly: agent recovery behavior should be testable, replayable, and exportable.
 
-## Demo script
+## Accomplishments
 
-1. Open Resilience Lab.
-2. Click Judge demo.
-3. Show the claims scenario with LLM brownout, MCP failure, stale retrieval, and blocked handoff.
-4. Point to the agent flight recorder timeline.
-5. Explain that the agent did not guess coverage or hide the failed dependency.
-6. Click Worst case to trigger every failure mode.
-7. Show regression checks and session history.
-8. Show the CI launch gate blocking release.
-9. Show dependency health and the auto-remediation backlog.
-10. Download the JSON report and explain how it becomes a regression test and audit artifact.
-11. Switch to DevOps Incident Agent to show that this is infrastructure, not a one-off assistant.
+- Built a full interactive replay console.
+- Added realistic failures across model, MCP, retrieval, schema, and handoff layers.
+- Added judge mode for a repeatable walkthrough.
+- Added launch gate, dependency health, remediation, and evidence export.
+- Polished the UI into a premium dark dashboard suitable for a hackathon demo.
+- Deployed the app and published the source repo.
 
-For judges, the direct demo URL can open in the strongest state:
+## What We Learned
 
-```text
-https://resilience-lab-nine.vercel.app?demo=judge
-```
+Agent reliability is not only uptime. It is about whether the agent knows when not to answer, how to disclose degraded context, how to route recovery, and how teams can prove that behavior before launch.
 
-## What makes it different
+## What's Next
 
-This is not another chatbot, support assistant, or dashboard skin. It is a reliability product for the agent stack itself.
+- Capture real model and MCP traces.
+- Run as a proxy around production agents.
+- Convert replay sessions into CI regression tests.
+- Add team workspaces and launch approvals.
+- Add hosted incident reports for engineering, compliance, and customer operations.
 
-The winning product version would sit between the agent and its dependencies, record real failure traces, and let teams prove recovery behavior before launch.
+## Links
+
+- Live demo: https://resilience-lab-nine.vercel.app
+- Judge mode: https://resilience-lab-nine.vercel.app?demo=judge
+- GitHub: https://github.com/Vt01nft/resilience-lab

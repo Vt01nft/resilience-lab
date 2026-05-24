@@ -1,34 +1,33 @@
-# Resilience Lab Demo Script
+# Demo Video Script
 
-## 90-second version
+## 90-Second Script
 
 Most AI agent demos show the happy path. Resilience Lab shows the break.
 
-This is an agent flight recorder for production teams. I can click Judge demo and immediately replay a claims agent under real failure conditions: the model browns out, the policy MCP fails, retrieval returns stale evidence, and escalation is blocked.
+This is an agent flight recorder for teams shipping AI agents into production. I can start in judge mode and replay a claims agent under realistic failure conditions: the model browns out, the policy MCP server fails, retrieval returns stale evidence, and the handoff path is blocked.
 
-Instead of guessing, the agent blocks the unsafe answer. The flight recorder shows what failed, when it failed, what was refused, and what safe response was generated.
+Instead of guessing or pretending everything is fine, the agent blocks unsafe output and creates a recovery trail. The dashboard shows the active failures, dependency health, resilience score, blocked paths, and whether this replay is safe to launch.
 
-The score drops to show the replay is not production-ready. The CI launch gate blocks release, the dependency health matrix shows which layers failed, and the remediation backlog turns the replay into engineering work.
+Now I can click Worst case. Every failure mode turns on, the score drops, and the launch gate blocks release. That is the point: the product does not just observe failure; it turns failure behavior into a release decision.
 
-Finally, I can export the JSON evidence report. That artifact can become a launch-review record, incident ticket, or regression test. The same system works across claims, DevOps incident response, and vendor-risk agents.
+Finally, I can copy the report or export JSON evidence. That artifact can become a launch-review record, incident ticket, or regression test.
 
-The goal is simple: before an AI agent reaches users, prove how it behaves when the stack breaks.
+The same replay system works across claims, DevOps incident response, and vendor-risk agents. The goal is simple: before an AI agent reaches users, prove how it behaves when the stack breaks.
 
-## Recording checklist
+## Recording Checklist
 
-- Start on the hero.
-- Click `Judge demo`.
-- Show the live replay score and active failures.
-- Scroll to the flight recorder and point to the blocked unsafe answer.
-- Show the evidence report.
-- Show regression checks and CI launch gate.
-- Show dependency health and auto-remediation backlog.
-- Click `Download JSON`.
-- Switch to DevOps Incident Agent to show the product is reusable.
+1. Open `https://resilience-lab-nine.vercel.app?demo=judge`.
+2. Pause on the hero and animated floating logo.
+3. Click **Start judge demo**.
+4. Point out the active failure count, unsafe paths blocked, launch gate, and evidence status.
+5. Scroll through scenario selection and failure injection.
+6. Show the replay timeline and recovery behavior.
+7. Click **Worst case**.
+8. Show the launch gate blocking release.
+9. Click **Copy report**.
+10. Click **Download JSON**.
+11. Switch to another scenario to prove reuse.
 
-## Devpost fields
+## 30-Second Backup Script
 
-- Project name: Resilience Lab
-- Tagline: Replay the moment your AI agent breaks.
-- Sponsor target: TrueFoundry: Resilient Agents
-- Main differentiator: This is not another chatbot. It is reliability infrastructure for testing agent failure behavior before production.
+Resilience Lab is an agent flight recorder. It tests what happens when an AI agent's model, MCP tools, retrieval, schema, or handoff systems fail. The product replays the incident, blocks unsafe answers, scores resilience, shows dependency health, and exports a report that can become a launch review or regression test. It is built for the TrueFoundry resilient agents challenge because it proves how an agent behaves when infrastructure chaos reaches production.
