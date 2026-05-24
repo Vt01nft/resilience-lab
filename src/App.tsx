@@ -59,13 +59,15 @@ const failureIcons: Record<FailureKey, typeof RadioTower> = {
 }
 
 const savedSessionsKey = 'resilience-lab.sessions.v1'
+const judgeDemoFailures: FailureKey[] = ['model', 'mcp', 'retrieval', 'handoff']
 
 function App() {
-  const [scenarioId, setScenarioId] = useState(scenarios[0].id)
+  const startsInJudgeMode = new URLSearchParams(window.location.search).get('demo') === 'judge'
+  const [scenarioId, setScenarioId] = useState(startsInJudgeMode ? 'claims' : scenarios[0].id)
   const [failures, setFailures] = useState<Set<FailureKey>>(
-    () => new Set(['model', 'mcp', 'retrieval']),
+    () => new Set(startsInJudgeMode ? judgeDemoFailures : ['model', 'mcp', 'retrieval']),
   )
-  const [sessions, setSessions] = useState<ReplaySession[]>(() => loadSessions())
+  const [sessions, setSessions] = useState<ReplaySession[]>(() => loadInitialSessions(startsInJudgeMode))
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'blocked'>('idle')
 
   const selectedScenario = scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0]
@@ -116,7 +118,7 @@ function App() {
   }
 
   function startJudgeDemo() {
-    const demoFailures = new Set<FailureKey>(['model', 'mcp', 'retrieval', 'handoff'])
+    const demoFailures = new Set<FailureKey>(judgeDemoFailures)
     setScenarioId('claims')
     setFailures(demoFailures)
     const scenario = scenarios.find((item) => item.id === 'claims') ?? selectedScenario
@@ -530,6 +532,16 @@ function App() {
     setSessions((current) => [session, ...current.filter((item) => item.id !== session.id)])
     setCopyState('idle')
   }
+}
+
+function loadInitialSessions(startsInJudgeMode: boolean) {
+  const loaded = loadSessions()
+  if (!startsInJudgeMode) {
+    return loaded
+  }
+
+  const scenario = scenarios.find((item) => item.id === 'claims') ?? scenarios[0]
+  return [createReplaySession(scenario, new Set(judgeDemoFailures)), ...loaded].slice(0, 8)
 }
 
 function Metric({

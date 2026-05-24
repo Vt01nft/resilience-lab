@@ -65,6 +65,12 @@ The next implementation layer would add:
 10. Download the JSON report and explain how it becomes a regression test and audit artifact.
 11. Switch to DevOps Incident Agent to show that this is infrastructure, not a one-off assistant.
 
+For judges, the direct demo URL can open in the strongest state:
+
+```text
+https://resilience-lab-nine.vercel.app?demo=judge
+```
+
 ## What makes it different
 
 This is not another chatbot, support assistant, or dashboard skin. It is a reliability product for the agent stack itself.

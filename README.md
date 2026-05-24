@@ -60,6 +60,12 @@ npm run build
 9. Download the JSON report.
 10. Switch to DevOps Incident Agent to show this is reusable infrastructure, not a one-off assistant.
 
+Direct judge-mode URL:
+
+```text
+https://resilience-lab-nine.vercel.app?demo=judge
+```
+
 ## Product Roadmap
 
 - Add a gateway proxy for OpenAI, Claude, Gemini, and self-hosted models.
