@@ -202,6 +202,11 @@ function App() {
     setToast('Operator note attached to replay')
   }
 
+  function jumpTo(sectionId: string, message: string) {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setToast(message)
+  }
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
@@ -262,9 +267,15 @@ function App() {
       </aside>
 
       <section className="console">
-        <a className="floating-logo" href="https://github.com/Vt01nft/resilience-lab" target="_blank" aria-label="Open Resilience Lab repository">
+        <a
+          className="floating-logo"
+          href="https://github.com/Vt01nft/resilience-lab"
+          target="_blank"
+          aria-label="Open Resilience Lab repository"
+        >
+          <span className="logo-orbit" />
           <img src="/resilience-lab-logo.svg" alt="" />
-          <span>Resilience Lab</span>
+          <span className="logo-label">Resilience Lab</span>
         </a>
 
         <header className="incident-header">
@@ -360,11 +371,45 @@ function App() {
         </section>
 
         <section className="demo-helper" aria-label="Demo guide">
-          <strong>Demo path</strong>
-          <span>1. Create Report</span>
-          <span>2. Inspect Trace Replay</span>
-          <span>3. Open Launch Gate criteria</span>
-          <span>4. Export JSON evidence</span>
+          <div>
+            <strong>Guided demo</strong>
+            <p>Follow this path for the cleanest two-minute walkthrough.</p>
+          </div>
+          <button type="button" onClick={startJudgeDemo}>1. Create report</button>
+          <button type="button" onClick={() => jumpTo('trace-replay', 'Trace replay focused')}>2. Inspect trace</button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowGateCriteria(true)
+              jumpTo('launch-gate', 'Launch gate opened')
+            }}
+          >
+            3. Open gate
+          </button>
+          <button type="button" onClick={downloadReport}>4. Export JSON</button>
+        </section>
+
+        <section className="status-overview" aria-label="Replay status overview">
+          <article>
+            <span>Resilience score</span>
+            <strong>{activeSession.score}/100</strong>
+            <small>{activeSession.readiness}</small>
+          </article>
+          <article>
+            <span>Failures injected</span>
+            <strong>{activeSession.failures.length}</strong>
+            <small>{activeSession.failures.map((failure) => failureLabels[failure]).join(', ') || 'None'}</small>
+          </article>
+          <article>
+            <span>Launch gate</span>
+            <strong>{activeSession.ciGate.status === 'pass' ? 'Allowed' : 'Blocked'}</strong>
+            <small>{activeSession.ciGate.summary}</small>
+          </article>
+          <article>
+            <span>Evidence</span>
+            <strong>{activeSession.unsafePathsBlocked}</strong>
+            <small>unsafe paths blocked</small>
+          </article>
         </section>
 
         <section className="dashboard-grid">
@@ -399,7 +444,7 @@ function App() {
             </button>
           </section>
 
-          <section className="panel trace-panel">
+          <section className="panel trace-panel" id="trace-replay">
             <PanelHeader
               title="Trace replay"
               action={showLegend ? 'Hide legend' : 'Legend'}
@@ -497,7 +542,7 @@ function App() {
             </div>
           </section>
 
-          <section className={`panel launch-panel ${activeSession.ciGate.status}`}>
+          <section className={`panel launch-panel ${activeSession.ciGate.status}`} id="launch-gate">
             <PanelHeader title="Launch gate" />
             <div className="gate-grid">
               <article className="blocked">
