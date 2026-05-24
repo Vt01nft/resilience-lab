@@ -206,10 +206,7 @@ function App() {
     <main className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark">
-            <span />
-            <span />
-          </div>
+          <img src="/resilience-lab-logo.svg" alt="" />
           <strong>Resilience Lab</strong>
         </div>
 
@@ -265,6 +262,11 @@ function App() {
       </aside>
 
       <section className="console">
+        <a className="floating-logo" href="https://github.com/Vt01nft/resilience-lab" target="_blank" aria-label="Open Resilience Lab repository">
+          <img src="/resilience-lab-logo.svg" alt="" />
+          <span>Resilience Lab</span>
+        </a>
+
         <header className="incident-header">
           <div>
             <p className="crumbs">Incidents <span>/</span> {incidentCode}</p>
@@ -355,6 +357,14 @@ function App() {
             <RefreshCw size={16} />
             Healthy replay
           </button>
+        </section>
+
+        <section className="demo-helper" aria-label="Demo guide">
+          <strong>Demo path</strong>
+          <span>1. Create Report</span>
+          <span>2. Inspect Trace Replay</span>
+          <span>3. Open Launch Gate criteria</span>
+          <span>4. Export JSON evidence</span>
         </section>
 
         <section className="dashboard-grid">
