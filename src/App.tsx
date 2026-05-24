@@ -1,14 +1,16 @@
 import {
   AlertTriangle,
   ArrowDownToLine,
-  CheckCircle2,
   Copy,
   Database,
   FileJson,
+  Gauge,
+  GitBranch,
   Play,
   RadioTower,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Terminal,
   Users,
   Wrench,
@@ -52,7 +54,7 @@ function App() {
   )
   const [sessions, setSessions] = useState<ReplaySession[]>(() => loadInitialSessions(startsInJudgeMode))
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'blocked'>('idle')
-  const [toast, setToast] = useState('Ready')
+  const [toast, setToast] = useState('')
 
   const selectedScenario = scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0]
   const previewSession = useMemo(
@@ -60,6 +62,7 @@ function App() {
     [failures, selectedScenario],
   )
   const activeSession = sessions[0] ?? previewSession
+  const failedDependencies = activeSession.dependencyHealth.filter((dependency) => dependency.status !== 'pass')
 
   useEffect(() => {
     localStorage.setItem(savedSessionsKey, JSON.stringify(sessions.slice(0, 8)))
@@ -125,208 +128,228 @@ function App() {
   }
 
   return (
-    <main className="simple-shell">
-      <a className="floating-logo" href="https://github.com/Vt01nft/resilience-lab" target="_blank" aria-label="Open GitHub repository">
-        <span className="logo-ring" />
-        <img src="/resilience-lab-logo.svg" alt="" />
-      </a>
+    <main className="product-shell">
+      <aside className="app-nav">
+        <div className="brand">
+          <img src="/resilience-lab-logo.svg" alt="" />
+          <div>
+            <strong>Resilience Lab</strong>
+            <span>Agent flight recorder</span>
+          </div>
+        </div>
 
-      <header className="hero">
-        <nav className="topbar">
-          <div className="brand">
-            <img src="/resilience-lab-logo.svg" alt="" />
-            <span>Resilience Lab</span>
-          </div>
-          <div className="top-actions">
-            <a href="https://github.com/Vt01nft/resilience-lab" target="_blank">GitHub</a>
-            <a href="https://resilience-lab-nine.vercel.app?demo=judge">Judge link</a>
-          </div>
+        <nav>
+          {['Overview', 'Replay Lab', 'Launch Gate', 'Reports'].map((item) => (
+            <button className={item === 'Replay Lab' ? 'active' : ''} type="button" key={item}>
+              {item}
+            </button>
+          ))}
         </nav>
 
-        <section className="hero-grid">
+        <div className="nav-card">
+          <ShieldCheck size={20} />
+          <strong>TrueFoundry fit</strong>
+          <span>Resilient agents under model, MCP, retrieval, and handoff failures.</span>
+        </div>
+      </aside>
+
+      <section className="main-stage">
+        <a className="floating-logo" href="https://github.com/Vt01nft/resilience-lab" target="_blank" aria-label="Open GitHub repository">
+          <span className="logo-ring" />
+          <img src="/resilience-lab-logo.svg" alt="" />
+        </a>
+
+        <header className="topbar">
           <div>
-            <p className="eyebrow">Agent reliability before production</p>
-            <h1>Replay the moment your AI agent breaks.</h1>
-            <p className="hero-copy">
-              Test how an AI agent behaves when models, MCP tools, retrieval, schemas, or handoffs fail.
-              Resilience Lab turns the failure into a score, recovery timeline, launch gate, and exportable report.
+            <p>Production replay</p>
+            <h1>Agent resilience command center</h1>
+          </div>
+          <div className="top-actions">
+            <a href="https://github.com/Vt01nft/resilience-lab" target="_blank">
+              <GitBranch size={17} />
+              GitHub
+            </a>
+            <button type="button" onClick={copyReport}>
+              <Copy size={17} />
+              {copyState === 'copied' ? 'Copied' : 'Share'}
+            </button>
+            <button type="button" onClick={downloadReport} data-testid="download-report">
+              <ArrowDownToLine size={17} />
+              Export
+            </button>
+          </div>
+        </header>
+
+        <section className="hero-console">
+          <div className="hero-copy">
+            <p className="eyebrow">Before agents reach users</p>
+            <h2>Prove how your AI agent recovers when the stack breaks.</h2>
+            <p>
+              Inject realistic failures, replay the incident, block unsafe output, score launch readiness,
+              and export the evidence.
             </p>
             <div className="hero-actions">
-              <button type="button" className="primary" data-testid="judge-demo" onClick={startJudgeDemo}>
-                <Play size={18} />
+              <button className="primary" type="button" data-testid="judge-demo" onClick={startJudgeDemo}>
+                <Sparkles size={18} />
                 Start judge demo
               </button>
-              <button type="button" onClick={() => captureReplay()}>
-                <RefreshCw size={18} />
+              <button type="button" onClick={() => captureReplay()} data-testid="run-replay">
+                <Play size={18} />
                 Capture replay
               </button>
-              <button type="button" className="danger" data-testid="worst-case" onClick={runWorstCase}>
+              <button className="danger" type="button" data-testid="worst-case" onClick={runWorstCase}>
                 <Zap size={18} />
                 Worst case
               </button>
             </div>
           </div>
 
-          <section className="score-card">
-            <span>Current replay</span>
-            <strong>{activeSession.score}/100</strong>
-            <p>{activeSession.readiness}</p>
-            <div className={`gate-pill ${activeSession.ciGate.status}`}>
-              {activeSession.ciGate.status === 'pass' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
-              {activeSession.ciGate.status === 'pass' ? 'Launch allowed' : 'Launch blocked'}
+          <div className="score-orb">
+            <div className="orb-ring" />
+            <span>Resilience score</span>
+            <strong>{activeSession.score}</strong>
+            <small>{activeSession.readiness}</small>
+          </div>
+        </section>
+
+        <section className="metrics-grid">
+          <Metric icon={AlertTriangle} label="Active failures" value={String(activeSession.failures.length)} detail={activeSession.failures.map((key) => failureLabels[key]).join(', ') || 'None'} />
+          <Metric icon={ShieldCheck} label="Unsafe paths blocked" value={String(activeSession.unsafePathsBlocked)} detail="Unsupported answers never reach the user." />
+          <Metric icon={Gauge} label="Launch gate" value={activeSession.ciGate.status === 'pass' ? 'Allowed' : 'Blocked'} detail={activeSession.ciGate.summary} />
+          <Metric icon={Terminal} label="Evidence" value="Exportable" detail="JSON report, timeline, checks, and remediation." />
+        </section>
+
+        <section className="workflow">
+          <section className="panel span-7">
+            <PanelTitle kicker="Step 1" title="Choose a high-stakes agent" />
+            <div className="scenario-grid">
+              {scenarios.map((scenario) => (
+                <button
+                  className={scenario.id === scenarioId ? 'active' : ''}
+                  type="button"
+                  data-testid={`scenario-${scenario.id}`}
+                  key={scenario.id}
+                  onClick={() => {
+                    setScenarioId(scenario.id)
+                    setToast(`${scenario.title} selected`)
+                  }}
+                >
+                  <span>{scenario.market}</span>
+                  <strong>{scenario.title}</strong>
+                  <small>{scenario.risk}</small>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel span-5">
+            <PanelTitle kicker="Step 2" title="Inject failure modes" />
+            <div className="failure-grid">
+              {allFailureKeys.map((key) => {
+                const Icon = failureIcons[key]
+                const active = failures.has(key)
+                return (
+                  <button
+                    className={active ? 'active' : ''}
+                    type="button"
+                    data-testid={`failure-${key}`}
+                    key={key}
+                    onClick={() => toggleFailure(key)}
+                  >
+                    <Icon size={19} />
+                    <span>{failureLabels[key]}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          <section className="panel span-8">
+            <PanelTitle kicker="Step 3" title="Replay timeline" />
+            <div className="timeline">
+              {activeSession.timeline.map((step) => (
+                <article className={step.status} key={`${step.at}-${step.label}`}>
+                  <time>{step.at}</time>
+                  <div>
+                    <strong>{step.label}</strong>
+                    <p>{step.detail}</p>
+                  </div>
+                  <em>{statusLabel[step.status]}</em>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel span-4">
+            <PanelTitle kicker="Step 4" title="Launch gate" />
+            <div className={`gate-card ${activeSession.ciGate.status}`}>
+              <ShieldCheck size={28} />
+              <strong>{activeSession.ciGate.status === 'pass' ? 'Safe to launch' : 'Release blocked'}</strong>
+              <p>{activeSession.ciGate.summary}</p>
+            </div>
+            <div className="dependency-stack">
+              {(failedDependencies.length ? failedDependencies : activeSession.dependencyHealth.slice(0, 3)).map((dependency) => (
+                <article className={dependency.status} key={dependency.name}>
+                  <span>{dependency.name}</span>
+                  <strong>{statusLabel[dependency.status]}</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel span-12">
+            <PanelTitle kicker="Step 5" title="Export evidence report" />
+            <pre>{activeSession.report}</pre>
+            <div className="report-actions">
+              <button type="button" data-testid="copy-report" onClick={copyReport}>
+                <Copy size={18} />
+                {copyState === 'copied' ? 'Copied' : copyState === 'blocked' ? 'Copy blocked' : 'Copy report'}
+              </button>
+              <button type="button" onClick={downloadReport}>
+                <ArrowDownToLine size={18} />
+                Download JSON
+              </button>
+              <button type="button" onClick={resetHealthy}>
+                <RefreshCw size={18} />
+                Healthy baseline
+              </button>
             </div>
           </section>
         </section>
-      </header>
 
-      <section className="quick-stats">
-        <Stat label="Failures" value={String(activeSession.failures.length)} detail={activeSession.failures.map((key) => failureLabels[key]).join(', ') || 'None'} />
-        <Stat label="Unsafe paths blocked" value={String(activeSession.unsafePathsBlocked)} detail="Guardrails prevented unsupported output" />
-        <Stat label="Evidence report" value="Ready" detail="Copy or download JSON for Devpost/demo" />
-        <Stat label="Impact avoided" value={activeSession.estimatedLossAvoided} detail="Estimated risk contained by recovery path" />
+        {toast ? <div className="toast" role="status">{toast}</div> : null}
       </section>
-
-      <section className="workspace">
-        <section className="panel">
-          <div className="section-title">
-            <span>1</span>
-            <div>
-              <h2>Choose an agent</h2>
-              <p>Switch scenarios to show this is reusable infrastructure.</p>
-            </div>
-          </div>
-          <div className="scenario-grid">
-            {scenarios.map((scenario) => (
-              <button
-                className={scenario.id === scenarioId ? 'active' : ''}
-                type="button"
-                data-testid={`scenario-${scenario.id}`}
-                key={scenario.id}
-                onClick={() => {
-                  setScenarioId(scenario.id)
-                  setToast(`${scenario.title} selected`)
-                }}
-              >
-                <span>{scenario.market}</span>
-                <strong>{scenario.title}</strong>
-                <small>{scenario.risk}</small>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="section-title">
-            <span>2</span>
-            <div>
-              <h2>Inject failures</h2>
-              <p>Toggle chaos conditions and capture a replay.</p>
-            </div>
-          </div>
-          <div className="failure-grid">
-            {allFailureKeys.map((key) => {
-              const Icon = failureIcons[key]
-              const active = failures.has(key)
-              return (
-                <button
-                  className={active ? 'active' : ''}
-                  type="button"
-                  data-testid={`failure-${key}`}
-                  key={key}
-                  onClick={() => toggleFailure(key)}
-                >
-                  <Icon size={20} />
-                  <span>{failureLabels[key]}</span>
-                  <small>{active ? 'Enabled' : 'Off'}</small>
-                </button>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="panel timeline-panel">
-          <div className="section-title">
-            <span>3</span>
-            <div>
-              <h2>Review recovery timeline</h2>
-              <p>See exactly what failed, what was blocked, and how the agent recovered.</p>
-            </div>
-          </div>
-          <div className="timeline">
-            {activeSession.timeline.map((step) => (
-              <article className={step.status} key={`${step.at}-${step.label}`}>
-                <time>{step.at}</time>
-                <div>
-                  <strong>{step.label}</strong>
-                  <p>{step.detail}</p>
-                </div>
-                <em>{statusLabel[step.status]}</em>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel side-panel">
-          <div className="section-title">
-            <span>4</span>
-            <div>
-              <h2>Launch gate</h2>
-              <p>{activeSession.ciGate.summary}</p>
-            </div>
-          </div>
-          <div className={`launch-box ${activeSession.ciGate.status}`}>
-            <ShieldCheck size={32} />
-            <strong>{activeSession.ciGate.status === 'pass' ? 'Safe to launch' : 'Release blocked'}</strong>
-            <code>{activeSession.ciGate.command}</code>
-          </div>
-          <div className="dependency-list">
-            {activeSession.dependencyHealth.map((dependency) => (
-              <article className={dependency.status} key={dependency.name}>
-                <span>{dependency.name}</span>
-                <strong>{statusLabel[dependency.status]}</strong>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel report-panel">
-          <div className="section-title">
-            <span>5</span>
-            <div>
-              <h2>Export evidence</h2>
-              <p>Use this report in Devpost, a launch review, or a regression test.</p>
-            </div>
-          </div>
-          <pre>{activeSession.report}</pre>
-          <div className="report-actions">
-            <button type="button" data-testid="copy-report" onClick={copyReport}>
-              <Copy size={18} />
-              {copyState === 'copied' ? 'Copied' : copyState === 'blocked' ? 'Copy blocked' : 'Copy report'}
-            </button>
-            <button type="button" data-testid="download-report" onClick={downloadReport}>
-              <ArrowDownToLine size={18} />
-              Download JSON
-            </button>
-            <button type="button" onClick={resetHealthy}>
-              <Terminal size={18} />
-              Healthy baseline
-            </button>
-          </div>
-        </section>
-      </section>
-
-      <div className="toast" role="status">{toast}</div>
     </main>
   )
 }
 
-function Stat({ label, value, detail }: { label: string; value: string; detail: string }) {
+function Metric({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: typeof AlertTriangle
+  label: string
+  value: string
+  detail: string
+}) {
   return (
     <article>
+      <Icon size={20} />
       <span>{label}</span>
       <strong>{value}</strong>
       <p>{detail}</p>
     </article>
+  )
+}
+
+function PanelTitle({ kicker, title }: { kicker: string; title: string }) {
+  return (
+    <header className="panel-title">
+      <span>{kicker}</span>
+      <h3>{title}</h3>
+    </header>
   )
 }
 
